@@ -13,6 +13,8 @@ pragma solidity ^0.8.18;
  *
  * It is similar to DAI if DAI had no governance, no fees, and was only backed by WETH and WBTC.
  *
+ * Our DSC system should always be "overcollateralized". At no point, should the value of all collateral <= the $ backed value of all the DSC.
+ *
  * @notice This contract is the DSC System. It handles all the logic for mining and redeeming DSC, as well as deposting & withdrawing collateral.
  * @notice This contract is VERY loosly based on the MakerDAO DSS (DAI) system
  */
@@ -21,4 +23,8 @@ contract DSCEngine {
     function depositCollateralAndMintDsc() external {}
 
     function redeemCollateralForDsc() external {}
+
+    function burnDsc() external {}
+
+    function liquidate() external {}
 }
