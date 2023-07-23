@@ -19,18 +19,16 @@ contract DSCEngineTest is Test {
     address public wbtc;
     uint256 public deployerKey;
 
-    address public user = address(1);
-    uint256 public constant STARTING_USER_BALANCE = 10 ether;
+    address public USER = makeAddr("user");
+    uint256 public constant AMOUNT_COLLATERAL = 10 ether;
+    uint256 public constant STARTING_ERC20_BALANCE = 10 ether;
 
     function setUp() external {
         deployer = new DeployDSC();
         (dsc, dscEngine, config) = deployer.run();
         (ethUsdPriceFeed, btcUsdPriceFeed, weth, wbtc, deployerKey) = config.activeNetworkConfig();
-        if (block.chainid == 31337) {
-            vm.deal(user, STARTING_USER_BALANCE);
-        }
-        ERC20Mock(weth).mint(user, STARTING_USER_BALANCE);
-        ERC20Mock(wbtc).mint(user, STARTING_USER_BALANCE);
+
+        ERC20Mock(weth).mint(USER, STARTING_ERC20_BALANCE);
     }
 
     ///////////////////////////
@@ -42,5 +40,19 @@ contract DSCEngineTest is Test {
         uint256 expectedUsd = 30000e18;
         uint256 actualUsd = dscEngine.getUsdValue(weth, ethAmount);
         assertEq(expectedUsd, actualUsd);
+    }
+
+    ///////////////////////////////////////
+    /////  depositCollateral Tests  ///////
+    ///////////////////////////////////////
+
+    function testRevertsIfCollateralZero() public {
+        address owner = msg.sender;
+        vm.startPrank(owner);
+        ERC20Mock(weth).approve(address(dscEngine), AMOUNT_COLLATERAL);
+
+        vm.expectRevert(DSCEngine.DSCEngine__NeedsMoreThanZero.selector);
+        dscEngine.depositCollateral(weth, 0);
+        vm.stopPrank();
     }
 }
