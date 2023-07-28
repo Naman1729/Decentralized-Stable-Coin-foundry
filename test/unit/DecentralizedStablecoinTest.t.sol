@@ -32,7 +32,7 @@ contract DecentralizedStablecoinTest is StdCheats, Test {
         dsc.mint(address(0), 100);
         vm.stopPrank();
     }
-    
+
     function testCantBurnMoreThanYouHave() public {
         vm.startPrank(dsc.owner());
         dsc.mint(address(this), 100);
@@ -40,5 +40,4 @@ contract DecentralizedStablecoinTest is StdCheats, Test {
         dsc.burn(101);
         vm.stopPrank();
     }
-
 }
