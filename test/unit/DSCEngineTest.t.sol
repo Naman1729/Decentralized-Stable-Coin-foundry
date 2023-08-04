@@ -35,6 +35,7 @@ contract DSCEngineTest is Test {
             vm.deal(USER, STARTING_ERC20_BALANCE);
         }
         ERC20Mock(weth).mint(USER, STARTING_ERC20_BALANCE);
+        ERC20Mock(wbtc).mint(USER, STARTING_ERC20_BALANCE);
     }
 
     /////////////////////////////////
@@ -139,7 +140,7 @@ contract DSCEngineTest is Test {
     /////////////////////////////////////
     // View & Pure Function Tests ///////
     /////////////////////////////////////
-    
+
     function testGetCollateralTokenPriceFeed() public {
         address priceFeed = dscEngine.getCollateralTokenPriceFeed(weth);
         assertEq(priceFeed, ethUsdPriceFeed);
