@@ -31,9 +31,7 @@ contract DSCEngineTest is Test {
         deployer = new DeployDSC();
         (dsc, dscEngine, config) = deployer.run();
         (ethUsdPriceFeed, btcUsdPriceFeed, weth, wbtc, deployerKey) = config.activeNetworkConfig();
-        if (block.chainid == 31337) {
-            vm.deal(USER, STARTING_ERC20_BALANCE);
-        }
+        
         ERC20Mock(weth).mint(USER, STARTING_ERC20_BALANCE);
         ERC20Mock(wbtc).mint(USER, STARTING_ERC20_BALANCE);
     }
