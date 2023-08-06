@@ -26,12 +26,15 @@ contract DSCEngineTest is Test {
     uint256 public constant AMOUNT_TO_MINT = 100 ether;
     uint256 public constant MIN_HEALTH_FACTOR = 1e18;
     uint256 public constant LIQUIDATION_THRESHOLD = 50;
+    uint256 private constant LIQUIDATION_PRECISION = 100;
 
     function setUp() external {
         deployer = new DeployDSC();
         (dsc, dscEngine, config) = deployer.run();
         (ethUsdPriceFeed, btcUsdPriceFeed, weth, wbtc, deployerKey) = config.activeNetworkConfig();
-        
+        if (block.chainid == 31337) {
+            vm.deal(USER, STARTING_ERC20_BALANCE);
+        }
         ERC20Mock(weth).mint(USER, STARTING_ERC20_BALANCE);
         ERC20Mock(wbtc).mint(USER, STARTING_ERC20_BALANCE);
     }
@@ -138,6 +141,15 @@ contract DSCEngineTest is Test {
     /////////////////////////////////////
     // View & Pure Function Tests ///////
     /////////////////////////////////////
+
+    function testCalculateHealthFactor () public depositedCollateralAndMintedDsc {
+        uint256 collateralValue = 100 ether;
+        uint256 dscMinted = 100 ether;
+        uint256 collateralAdjustedForThreshold = (collateralValue * LIQUIDATION_THRESHOLD) / LIQUIDATION_PRECISION;
+        uint256 expectedHealthFactor = (collateralAdjustedForThreshold * MIN_HEALTH_FACTOR) / dscMinted;
+        uint256 healthFactor = dscEngine.calculateHealthFactor(collateralValue, dscMinted);
+        assertEq(healthFactor, expectedHealthFactor);
+    }
 
     function testGetCollateralTokenPriceFeed() public {
         address priceFeed = dscEngine.getCollateralTokenPriceFeed(weth);
