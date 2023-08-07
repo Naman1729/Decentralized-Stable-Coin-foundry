@@ -144,10 +144,10 @@ contract DSCEngineTest is Test {
 
     function testCalculateHealthFactor () public depositedCollateralAndMintedDsc {
         uint256 collateralValue = 100 ether;
-        uint256 dscMinted = 100 ether;
+        uint256 dscMinted = 100 ether;// here dscMinted != 0 because "HealthFactor = (collateralValue * LIQUIDATION_THRESHOLD) / dscMinted" and we cannot divide by 0.
         uint256 collateralAdjustedForThreshold = (collateralValue * LIQUIDATION_THRESHOLD) / LIQUIDATION_PRECISION;
         uint256 expectedHealthFactor = (collateralAdjustedForThreshold * MIN_HEALTH_FACTOR) / dscMinted;
-        uint256 healthFactor = dscEngine.calculateHealthFactor(collateralValue, dscMinted);
+        uint256 healthFactor = dscEngine.calculateHealthFactor(dscMinted, collateralValue);
         assertEq(healthFactor, expectedHealthFactor);
     }
 
