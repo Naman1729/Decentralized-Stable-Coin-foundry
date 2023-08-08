@@ -21,12 +21,14 @@ contract DSCEngineTest is Test {
     uint256 public deployerKey;
 
     address public USER = makeAddr("user");
+    address public LIQUIDATOR = makeAddr("liquidator");
     uint256 public constant AMOUNT_COLLATERAL = 10 ether;
     uint256 public constant STARTING_ERC20_BALANCE = 10 ether;
     uint256 public constant AMOUNT_TO_MINT = 100 ether;
     uint256 public constant MIN_HEALTH_FACTOR = 1e18;
     uint256 public constant LIQUIDATION_THRESHOLD = 50;
     uint256 private constant LIQUIDATION_PRECISION = 100;
+    uint256 public constant COLLATERAL_TO_COVER = 20 ether;
 
     function setUp() external {
         deployer = new DeployDSC();
@@ -138,13 +140,53 @@ contract DSCEngineTest is Test {
         assert(userHealthFactor == 0.9 ether);
     }
 
+    ///////////////////////////
+    /// MintDsc Tests  ////////
+    ///////////////////////////
+
+    function testMintDSC() public depositedCollateral {
+        uint256 expectedDscMinted = 100 ether;
+        vm.startPrank(USER);
+        dscEngine.mintDsc(AMOUNT_TO_MINT);
+        vm.stopPrank();
+        (uint256 dscMinted,) = dscEngine.getAccountInformation(USER);
+        assertEq(dscMinted, expectedDscMinted);
+    }
+
+    function testRevertsIfMintingZero() public depositedCollateral {
+        uint256 expectedDscMinted = 0;
+        vm.startPrank(USER);
+        vm.expectRevert(DSCEngine.DSCEngine__NeedsMoreThanZero.selector);
+        dscEngine.mintDsc(expectedDscMinted);
+        vm.stopPrank();
+    }
+
+    ///////////////////////////////////////
+    ///// liquidate Tests  ////////////////
+    ///////////////////////////////////////
+
+    function testCantLiquidateGoodHealthFactor() public depositedCollateralAndMintedDsc {
+        ERC20Mock(weth).mint(LIQUIDATOR, COLLATERAL_TO_COVER);
+
+        vm.startPrank(LIQUIDATOR);
+        ERC20Mock(weth).approve(address(dscEngine), COLLATERAL_TO_COVER);
+        dscEngine.depositCollateralAndMintDsc(weth, COLLATERAL_TO_COVER, AMOUNT_TO_MINT);
+        dsc.approve(address(dscEngine), AMOUNT_TO_MINT);
+
+        vm.expectRevert(DSCEngine.DSCEngine__HealthFactorOK.selector);
+        dscEngine.liquidate(weth, USER, AMOUNT_TO_MINT);
+        vm.stopPrank();
+    }
+
+    function testLiquidate() public depositedCollateralAndMintedDsc {}
+
     /////////////////////////////////////
     // View & Pure Function Tests ///////
     /////////////////////////////////////
 
-    function testCalculateHealthFactor () public depositedCollateralAndMintedDsc {
+    function testCalculateHealthFactor() public depositedCollateralAndMintedDsc {
         uint256 collateralValue = 100 ether;
-        uint256 dscMinted = 100 ether;// here dscMinted != 0 because "HealthFactor = (collateralValue * LIQUIDATION_THRESHOLD) / dscMinted" and we cannot divide by 0.
+        uint256 dscMinted = 100 ether; // here dscMinted != 0 because "HealthFactor = (collateralValue * LIQUIDATION_THRESHOLD) / dscMinted" and we cannot divide by 0.
         uint256 collateralAdjustedForThreshold = (collateralValue * LIQUIDATION_THRESHOLD) / LIQUIDATION_PRECISION;
         uint256 expectedHealthFactor = (collateralAdjustedForThreshold * MIN_HEALTH_FACTOR) / dscMinted;
         uint256 healthFactor = dscEngine.calculateHealthFactor(dscMinted, collateralValue);
