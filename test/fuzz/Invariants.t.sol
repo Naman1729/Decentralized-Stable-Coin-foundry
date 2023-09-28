@@ -43,6 +43,11 @@ contract OpenInvariantsTest is StdInvariant, Test {
         console.log("wbtcValue: ", wbtcValue);
         assert((wethValue + wbtcValue) >= totalSupply);
     }
+
+    function invariant_getterShouldNotRevert() public view {
+        dsce.getLiquidationBonus();
+        dsce.getPrecision();
+    }
 }
 
 // Notes:
